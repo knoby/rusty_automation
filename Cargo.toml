@@ -3,8 +3,6 @@ members = ["control", "hmi"]
 
 resolver = "3"
 
-[profile]
-
 [profile.wasm-dev]
 inherits = "dev"
 opt-level = 1

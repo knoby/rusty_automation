@@ -1,10 +1,11 @@
 use std::io::{self, Write};
 
+use anyhow::Result;
 use log::debug;
 use simplelog::Config;
 
 #[tokio::main]
-async fn main() -> anyhow::Result<()> {
+async fn main() -> Result<()> {
     // Init Logger
     let log_file = std::fs::File::create("etc_diag_log.txt")?;
     simplelog::WriteLogger::init(log::LevelFilter::Debug, Config::default(), log_file)?;
@@ -12,7 +13,7 @@ async fn main() -> anyhow::Result<()> {
     run_repl()
 }
 
-fn run_repl() -> anyhow::Result<()> {
+fn run_repl() -> Result<()> {
     debug!("Starting Repl Loop");
     println!("Welcom to Rusty Automation EtherCat Diagnostic Tool");
     let stdin = io::stdin();
@@ -47,7 +48,7 @@ fn run_repl() -> anyhow::Result<()> {
             Ok(cmd) => match cmd {
                 Commands::Help => print_help(),
                 Commands::Exit => break,
-                Commands::ListPorts => todo!("Implement Port Scanner"),
+                Commands::ListPorts => print_interfaces()?,
             },
             Err(_) => println!("Unknown Command. use help for list of commands"),
         }
@@ -58,9 +59,32 @@ fn run_repl() -> anyhow::Result<()> {
 
 fn print_help() {
     println!("Available commands:");
-    println!("  help                 – diese Hilfe");
-    println!("  exit / quit          – Programm beenden");
+    println!("  help                 – show this help");
+    println!("  exit / quit          – end program");
+    println!("  list_ports           - Show list of available ethernet ports");
     println!("help <command> displays information about the command and its use")
+}
+
+fn print_interfaces() -> Result<()> {
+    let ifaces = if_addrs::get_if_addrs()?;
+
+    for iface in ifaces {
+        println!("--- Interface -----------------------------------");
+        println!("Name     : {}", iface.name);
+        match iface.addr {
+            if_addrs::IfAddr::V4(v4) => {
+                println!("IPv4          : {}", v4.ip);
+                if let Some(broadcast) = v4.broadcast {
+                    println!("  Broadcast   : {}", broadcast);
+                }
+            }
+            if_addrs::IfAddr::V6(v6) => {
+                println!("IPv6          : {}", v6.ip);
+            }
+        }
+        println!();
+    }
+    Ok(())
 }
 
 enum Commands {

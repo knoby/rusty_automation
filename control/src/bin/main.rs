@@ -4,6 +4,7 @@ use ethercrab::{
     MainDevice, MainDeviceConfig, PduStorage, Timeouts,
     std::{ethercat_now, tx_rx_task},
 };
+use simplelog::Config;
 use tokio::time::MissedTickBehavior;
 
 /// Maximum number of SubDevices that can be stored. This must be a power of 2 greater than 1.
@@ -20,7 +21,12 @@ static PDU_STORAGE: PduStorage<MAX_FRAMES, MAX_PDU_DATA> = PduStorage::new();
 #[tokio::main]
 async fn main() {
     // Enable Logger
-    pretty_env_logger::init();
+    simplelog::TermLogger::new(
+        log::LevelFilter::Debug,
+        Config::default(),
+        simplelog::TerminalMode::Mixed,
+        simplelog::ColorChoice::Auto,
+    );
 
     // Select interface
     let interface = std::env::args().nth(1).unwrap_or_else(|| "en9".to_string());
