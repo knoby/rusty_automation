@@ -1,0 +1,2 @@
+[profile.dev.env]
+RUST_LOG = "info"
