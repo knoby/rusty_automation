@@ -1,4 +1,5 @@
 #![allow(unused)]
+pub mod etc_helper;
 pub mod hal;
 
 pub mod prelude {

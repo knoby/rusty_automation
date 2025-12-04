@@ -16,6 +16,7 @@ name = "control_lib"
 path = "src/lib.rs"
 
 [dependencies]
+async-scoped = { version = "0.9.0", features = ["use-tokio"] }
 ethercrab = "0.6"
 ethercrab-wire = { version = "0.2", features = ["std"] }
 ethercrab-wire-derive = "0.2"

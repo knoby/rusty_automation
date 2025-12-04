@@ -10,10 +10,10 @@ async fn main() -> Result<()> {
     let log_file = std::fs::File::create("etc_diag_log.txt")?;
     simplelog::WriteLogger::init(log::LevelFilter::Debug, Config::default(), log_file)?;
 
-    run_repl()
+    run_repl().await
 }
 
-fn run_repl() -> Result<()> {
+async fn run_repl() -> Result<()> {
     debug!("Starting Repl Loop");
     println!("Welcom to Rusty Automation EtherCat Diagnostic Tool");
     let stdin = io::stdin();
@@ -49,6 +49,20 @@ fn run_repl() -> Result<()> {
                 Commands::Help => print_help(),
                 Commands::Exit => break,
                 Commands::ListPorts => print_interfaces()?,
+                Commands::BusScan => {
+                    let iface = if let Some(iface) = parts.get(1) {
+                        iface.to_owned()
+                    } else {
+                        println!("Provide Port Name!");
+                        continue;
+                    };
+                    match control_lib::etc_helper::bus_scan(iface).await {
+                        Ok(device_list) => {
+                            print_device_list(device_list);
+                        }
+                        Err(e) => println!("Unable to scan for devices: {}", e),
+                    };
+                }
             },
             Err(_) => println!("Unknown Command. use help for list of commands"),
         }
@@ -62,6 +76,7 @@ fn print_help() {
     println!("  help                 – show this help");
     println!("  exit / quit          – end program");
     println!("  list_ports           - Show list of available ethernet ports");
+    println!("  bus_scan <if>        - Scans ");
     println!("help <command> displays information about the command and its use")
 }
 
@@ -87,10 +102,17 @@ fn print_interfaces() -> Result<()> {
     Ok(())
 }
 
+fn print_device_list(device_list: Vec<String>) {
+    for device in device_list {
+        println!("{}", device);
+    }
+}
+
 enum Commands {
     Exit,
     ListPorts,
     Help,
+    BusScan,
 }
 
 impl TryFrom<&str> for Commands {
@@ -101,6 +123,7 @@ impl TryFrom<&str> for Commands {
             "exit" | "Exit" | "quit" | "Quit" => Ok(Self::Exit),
             "help" | "Help" => Ok(Self::Help),
             "ListPorts" | "list_ports" => Ok(Self::ListPorts),
+            "BusScan" | "bus_scan" => Ok(Self::BusScan),
             _ => Err(anyhow::anyhow!("Unknown Command")),
         }
     }
